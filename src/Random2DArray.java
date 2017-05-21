@@ -20,7 +20,7 @@ public class Random2DArray {
                 if (ii >= qq){
                     random[ii][qq] = 0;
                 } else {
-                    inc = x + rand.nextInt(3) + 1;
+                    inc = x + rand.nextInt(2) + 1;
                 }
                 System.out.print(random[ii][qq] + "|");
 
