@@ -1,6 +1,6 @@
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * Created by Marky on 5/21/2017.
@@ -51,9 +51,55 @@ public class Main {
             }
             System.out.println();
         }
-
+        brute(canoeArray);
         sc.close();
         sc2.close();
     }
 
+    public static void brute(int[][] arr) {
+        // Number of posts 'n'
+        int numPosts = arr.length;
+
+        // A map containing paths as key, costs as value.
+        // TreeMap uses a Red-Black tree, log(n) insertion
+        TreeMap<Integer, ArrayList<Integer>> pathCosts = new TreeMap<>();
+
+        // Retrieve all possible paths. O(n^2) runtime
+        Set<ArrayList<Integer>> possibleSolutions = getPossiblePaths(numPosts);
+        // System.out.println(possibleSolutions);
+
+        // Fill map with all possible solutions and their cost.
+        for (ArrayList<Integer> row : possibleSolutions) {
+            int cost = 0;
+            Integer current = null;
+            // Look at previous post and current post to know where to go in cost matrix
+            for (Integer next : row) {
+                if (current != null) {
+                    cost += arr[current - 1][next - 1];
+                }
+                current = next;
+            }
+            pathCosts.put(cost, row);
+        }
+        // System.out.println(pathCosts);
+        System.out.println("Best path via Brute Force: " + pathCosts.firstEntry().getValue() + " with cost of " + pathCosts.firstKey());
+
+    }
+    public static Set<ArrayList<Integer>> getPossiblePaths(int numPosts) {
+        Set<ArrayList<Integer>> pathList = new HashSet<>();
+
+        for (int p = numPosts; p > 2; p--) {
+            for (int i = 2; i < numPosts; i++) {
+                ArrayList<Integer> arr = new ArrayList<>();
+                arr.add(1); // Add first post
+                for (int j = i; j < p; j++) {
+                    arr.add(j); // Add posts in between
+                }
+                arr.add(numPosts); // Add last post
+                pathList.add(arr);
+            }
+        }
+
+        return pathList;
+    }
 }

@@ -5,13 +5,15 @@ import java.util.Random;
  */
 public class Random2DArray {
 
+    int[][] random;
+
     public Random2DArray(){
 
         Random rand = new Random();
 
-        int n = 5;
+        int n = 4;
 
-        int[][] random = new int[n][n];
+        random = new int[n][n];
         for (int ii = 0; ii < n; ii++){
             int inc = 0;
             for (int qq = 0; qq < n; qq++){
@@ -29,6 +31,10 @@ public class Random2DArray {
 
         }
 
+    }
+
+    public int[][] giveMeArray(){
+        return random;
     }
 
 }
