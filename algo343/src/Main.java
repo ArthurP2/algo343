@@ -7,8 +7,8 @@ import java.util.*;
  */
 public class Main {
 	
-
 	private static int n;
+	
     public static void main(String[] args){
         Random2DArray r = new Random2DArray();
         String f = "test.txt";
@@ -56,7 +56,10 @@ public class Main {
         canoeArray = r.giveMeArray();
         brute(canoeArray);
         dynamic(canoeArray);
-        divide(10, canoeArray);
+        int[] cheapestCost = dnc(0, canoeArray);
+        String minPathDivide = buildDividePath(cheapestCost);
+        System.out.println("Divide and Conquer Algorithm");
+        System.out.println("Minimum Path: " + minPathDivide + ", Minimum cost: " + cheapestCost[0]);
         sc.close();
         sc2.close();
     }
@@ -85,7 +88,20 @@ public class Main {
             pathCosts.put(cost, row);
         }
         System.out.println("Best path via Brute Force: " + pathCosts.firstEntry().getValue() + " with cost of " + pathCosts.firstKey());
+    
+    }
+    private static String buildDividePath(int[] minCost) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[1");
+        for(int i = 1; i < minCost.length; i++) {
+            if(minCost[i] > 0) {
+                sb.append(", ");
+                sb.append(minCost[i]);
+            }
+        }
+        sb.append("]");
 
+        return sb.toString();
     }
     public static Set<ArrayList<Integer>> getPossiblePaths(int numPosts) {
         Set<ArrayList<Integer>> pathList = new HashSet<>();
@@ -106,13 +122,13 @@ public class Main {
     }
     public static void dynamic(int[][] arr) {
         int n = arr[0].length;
-        Integer[][] solutionArr = new Integer[n][n];
+        Integer[][] cheapArr = new Integer[n][n];
 
         /* Fill in top row of solution array
          * Will always be the same as the top row of the input
          */
         for (int i = 0 ; i < n; i++) {
-                solutionArr[0][i] = arr[0][i];
+                cheapArr[0][i] = arr[0][i];
         }
 
         //Top to bottom
@@ -125,10 +141,10 @@ public class Main {
                 //added onto the current cell. That is, the most optimal previous value plus the price
                 //of renting a canoe in this particular column.
                 for (int k = i; k < j; k++) {
-                    if (solutionArr[i][k]
+                    if (cheapArr[i][k]
                             + arr[i][j] < minValue
                             || minValue == -1) {
-                        minValue = solutionArr[i][k] + arr[i][j];
+                        minValue = cheapArr[i][k] + arr[i][j];
                     }
                 }
                 //find the minimum value of all cells above in the same column of the current cell
@@ -137,24 +153,25 @@ public class Main {
                 for (int k = 0; k < i; k++) {
                     if (arr[k][j] != -1) {
 
-                        if (solutionArr[k][j] < minValue || minValue == -1) {
-                            minValue = solutionArr[k][j];
+                        if (cheapArr[k][j] < minValue || minValue == -1) {
+                            minValue = cheapArr[k][j];
                         }
                     }
                 }
                 //Finally, update the current cell to the most optimal value obtained from the above loops.
-                solutionArr[i][j] = minValue;
+                cheapArr[i][j] = minValue;
             }
         }
 
         System.out.println("Dynamic Programming Algorithm");
 
 
-        System.out.println("Minimum path: " + recover(solutionArr).toString() + ", Minimum cost: " + solutionArr[n - 1][n - 1]);
+        System.out.println("Minimum path: " + recover(cheapArr).toString() + ", Minimum cost: " + cheapArr[n - 1][n - 1]);
     }
-    public static int[] divide(int i, int[][] arr1) {
+    public static int[] dnc(int i, int[][] arr1) {
         int minVal = Integer.MAX_VALUE;
         int minJ = Integer.MAX_VALUE;
+        int n = arr1.length;
         int[] arr = new int[n + 1];
 
         if(i == n - 1) {        /* BASE CASE */
@@ -162,7 +179,7 @@ public class Main {
             return arr;
         } else {
             for(int j = i + 1; j < n; j++) {
-                int[] curArr = divide(j, arr1);
+                int[] curArr = dnc(j, arr1);
                 int curVal = curArr[0] + arr1[i][j];
 
                 if (curVal < minVal) {
