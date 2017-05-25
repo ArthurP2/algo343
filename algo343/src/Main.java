@@ -56,10 +56,10 @@ public class Main {
         canoeArray = r.giveMeArray();
         brute(canoeArray);
         dynamic(canoeArray);
-        int[] cheapestCost = dnc(0, canoeArray);
+        int cheapestCost = DivideRentals(canoeArray, 0, canoeArray.length - 1);
         String minPathDivide = buildDividePath(cheapestCost);
         System.out.println("Divide and Conquer Algorithm");
-        System.out.println("Minimum Path: " + minPathDivide + ", Minimum cost: " + cheapestCost[0]);
+        System.out.println("Minimum Path:" + minPathDivide + "Minimum cost: " + cheapestCost);
         sc.close();
         sc2.close();
     }
@@ -90,13 +90,13 @@ public class Main {
         System.out.println("Best path via Brute Force: " + pathCosts.firstEntry().getValue() + " with cost of " + pathCosts.firstKey());
     
     }
-    private static String buildDividePath(int[] minCost) {
+    private static String buildDividePath(int cheapestCost) {
         StringBuilder sb = new StringBuilder();
         sb.append("[1");
-        for(int i = 1; i < minCost.length; i++) {
-            if(minCost[i] > 0) {
+        for(int i = 1; i < cheapestCost; i++) {
+            if(cheapestCost > 0) {
                 sb.append(", ");
-                sb.append(minCost[i]);
+                sb.append(cheapestCost);
             }
         }
         sb.append("]");
@@ -168,34 +168,18 @@ public class Main {
 
         System.out.println("Minimum path: " + recover(cheapArr).toString() + ", Minimum cost: " + cheapArr[n - 1][n - 1]);
     }
-    public static int[] dnc(int i, int[][] arr1) {
-        int minVal = Integer.MAX_VALUE;
-        int minJ = Integer.MAX_VALUE;
-        int n = arr1.length;
-        int[] arr = new int[n + 1];
-
-        if(i == n - 1) {        /* BASE CASE */
-            arr[0] = 0;
-            return arr;
-        } else {
-            for(int j = i + 1; j < n; j++) {
-                int[] curArr = dnc(j, arr1);
-                int curVal = curArr[0] + arr1[i][j];
-
-                if (curVal < minVal) {
-                    minVal = curVal;
-                    minJ = j;
-
-                    System.arraycopy(curArr, 0, arr, 0, arr.length); //O(n)
-                }
-            }
-        }
-        arr[0] = minVal;                /* Updates the minimum value. */
-
-        /* Add the current solution j value to the argument. */
-        arr[i + 1] = minJ + 1;
-        return arr;
-    }
+    public static int DivideRentals(int A[][], int n, int m){
+		if (n==m)
+			return 0;
+		ArrayList<Integer> paths = new ArrayList<Integer>();
+		for(int b =n+1; b <=m; b++)
+			paths.add(A[n][b]+DivideRentals(A,b,m));
+		
+		int minVal = Collections.min(paths);
+		//System.out.println(paths);
+		//int path = paths.indexOf(minVal);
+ 		return minVal;
+	}
     
     public static Set<Integer> recover(Integer[][] cheapestArr) {
         int n = cheapestArr[0].length;
