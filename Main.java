@@ -6,18 +6,14 @@ import java.util.*;
  * Created by Arthur and Scott on 5/21/2017.
  */
 public class Main {
-	
+	//Size of the 2D matrix
 	private static int n;
-	private static ArrayList<Integer> x1;
-    private static ArrayList<Integer> x2;
-    private static TreeMap<Integer, ArrayList<Integer>> pathCosts;
+
+	//The 2D matrix of the canoe problem
     private static int[][] canoeArray;
 
     public static void main(String[] args){
-        x1 = new ArrayList<>();
-        x2 = new ArrayList<>();
-        pathCosts = new TreeMap<>();
-        String f = "test2";
+        String f = "test.txt";
         Scanner sc = null;
         Scanner sc2 = null;
         try {
@@ -27,6 +23,7 @@ public class Main {
             e.printStackTrace();
         }
         n = 0;
+        //Getting the length of the 2D array.
         while (sc.hasNextLine()) {
             Scanner scWords = new Scanner(sc.nextLine());
             while (scWords.hasNext()) {
@@ -36,6 +33,7 @@ public class Main {
             break;
         }
         canoeArray = new int[n][n];
+        //Filling the 2D array with the canoe values.
         int qq = 0;
         while (sc2.hasNextLine()) {
             Scanner scWords = new Scanner(sc2.nextLine());
@@ -47,226 +45,252 @@ public class Main {
                     x = Integer.parseInt(s);
                 }
                 canoeArray[qq][ii] = x;
-                //System.out.print(s + "|");
                 ii++;
             }
             qq++;
-            //System.out.println();
         }
+
+        //Printing the contents of the array from the file.
         for (int xx = 0; xx < n; xx++){
             for (int yy = 0; yy < n; yy++){
                 System.out.print(canoeArray[xx][yy] + "|");
             }
             System.out.println();
         }
+        //Creates a randomArray generator object.
         Random2DArray r = new Random2DArray(n);
+        //Get a random array.
         canoeArray = r.giveMeArray();
-        brute(canoeArray);
-        dynamic(canoeArray);
+        long start, end;
+        start = System.currentTimeMillis();
+        brute();
+        end = System.currentTimeMillis();
+        System.out.println("Brute took " + (end - start) + " milliseconds\n");
+
+        start = System.currentTimeMillis();
+        dynamic();
+        end = System.currentTimeMillis();
+        System.out.println("Dynamic took " + (end - start) + " milliseconds\n");
+
+        start = System.currentTimeMillis();
         int[] cheapestCost = divide(0);
+        end = System.currentTimeMillis();
         String minPathDivide = buildDividePath(cheapestCost);
         System.out.println("Divide and Conquer Algorithm");
         System.out.println("Minimum Path:" + minPathDivide + "Minimum cost: " + cheapestCost[0]);
+        System.out.println("Dynamic took " + (end - start) + " milliseconds\n");
+
         sc.close();
         sc2.close();
     }
 
-    public static void brute(int[][] canoe) {
-        final int nVal = canoe.length;
-        int minVal = -1;
-        Set<Integer> minSet = new TreeSet<>();
+    /**
+     * Brute Force. O(2^n) runtime.
+     */
+    public static void brute() {
+        int minimum = -1;
+        Set<Integer> minPath = new TreeSet<>();
+        //Will put each location in Array in a set
+        TreeSet<Integer> allLocations = new TreeSet<>();
+        for(int ii = 1; ii <= n; ii++) {
+            allLocations.add(ii);
 
-        HashSet<Integer> startingSet = new HashSet<>();                         /* This set will hold 1 ..... n values. */
-        for(int i = 1; i <= nVal; i++) {                                        /* Populates the starting set */
-            startingSet.add(i);
         }
+        //Get all paths possible form canoe array
+        Set<TreeSet<Integer>> allPaths = getAllPathsInSet(allLocations);
+        System.out.println("Brute Force Algorithm [O(2^n)]:");
+        //Goes through all combonations, so 2^n.
+        for(Set<Integer> pathCombo : allPaths) {
+            //This will be the total cost for the path.
+            Integer totalPath = 0;
+            ArrayList<Integer> setList = new ArrayList<>(pathCombo);
+            //If the possible combo has 1 and the N length, it must be one of the correct combos.
+            if(pathCombo.contains(1) && pathCombo.contains(n)) {
+                for(int ii = 0; ii < pathCombo.size() - 1; ii++) {
+                    //Go through the array diagonally.
+                    int xx = setList.get(ii) - 1;
+                    int yy = setList.get(ii + 1) - 1;
 
-        Set<TreeSet<Integer>> setsOSets = getPowerSetIterative(startingSet);    /* Get the power set*/
-
-        System.out.println("Brute Force Algorithm");
-        for(Set<Integer> currSet : setsOSets) {
-            Integer pathSum = 0;                                                /* Total cost for this path. */
-            ArrayList<Integer> setList = new ArrayList<>(currSet);
-
-            if(currSet.contains(1) && currSet.contains(nVal)) {                 /* If it contains 1 and n, get min value. */
-                //TODO uncomment following line to view valid subsets.
-                //System.out.println(currSet);
-                for(int i = 0; i < currSet.size() - 1; i++) {                   /* i = Rx, i + 1 = Ry */
-                    int cRow = setList.get(i) - 1;                          /* Get the row in the array of the path cost. */
-                    int cCol = setList.get(i + 1) - 1;                      /* Get the col in the array of the path cost. */
-                    pathSum += canoe[cRow][cCol];
+                    totalPath += canoeArray[xx][yy];
                 }
-
-                if(pathSum < minVal || minVal == -1) {                          /* Assign minVal if pathSum is smaller. */
-                    minVal = pathSum;
-                    minSet = currSet;
+                //Check if the total path is smaller than -1.
+                if( minimum == -1 || totalPath < minimum ) {
+                    minimum = totalPath;
+                    minPath = pathCombo;
                 }
             }
         }
 
-        /* Display the minimum set. */
-        System.out.println("Minimum path: " + minSet.toString() + ", Minimum cost: " + minVal);
+        // Display the minimum set
+        System.out.println("Cheapest Path: " + minPath.toString() + ", Cheapest Cost: " + minimum);
     }
 
-    public static Set<TreeSet<Integer>> getPowerSetIterative(Set<Integer> theStartingSet) {
-        Set<TreeSet<Integer>> powerSet = new HashSet<>();           //result set
-        powerSet.add(new TreeSet<>());                              //base: add empty set
+    /**
+     * Gets all possible paths in a set.
+     *
+     * @param thePaths
+     * @return a set of all possible paths.
+     */
+    public static Set<TreeSet<Integer>> getAllPathsInSet(Set<Integer> thePaths) {
+        Set<TreeSet<Integer>> allPaths = new HashSet<>();
+        //This set will hold tree sets, since it is the holder of all possible sets in the path.
+        allPaths.add(new TreeSet<>());
 
-        for (Integer currentInt : theStartingSet) {                 //for every number in the range from 1 to n
-            Set<TreeSet<Integer>> newSet = new HashSet<>();         //current set to replace the powerset
+        for (Integer xx : thePaths) {
+            Set<TreeSet<Integer>> newCombos = new HashSet<>();
 
-            for (TreeSet<Integer> subset : powerSet) {              //for every subset in the powerset so far
-                if (subset.contains(1) || subset.contains(n-1)) {  //make sure old subsets that actually have
-                    //useful values are kept in the powerset
-                    newSet.add(subset);                            //add the current subset to the new powerset
+            for (TreeSet<Integer> combo : allPaths) {
+                if (combo.contains(1) || combo.contains(n-1)) {
+                    newCombos.add(combo);
                 }
 
-                TreeSet<Integer> newSubset = new TreeSet<>(subset); //Copy the current subset
-                newSubset.add(currentInt);                          //and add the current int to it
-                newSet.add(newSubset);                              //add the newly formed subset with one more element
-                //than the previous to the powerset
+                TreeSet<Integer> newSubset = new TreeSet<>(combo);
+                newSubset.add(xx);
+                newCombos.add(newSubset);
+
             }
-            powerSet = newSet;                                      //reassign powerset
+            allPaths = newCombos;
         }
-        return powerSet;
+        return allPaths;
 
     }
 
 
-    private static String buildDividePath(int[] minCost) {
+    /**
+     * dynamic. O(nLogn)
+     *
+     */
+    public static void dynamic() {
+
+        Integer[][] cheapestPaths = new Integer[n][n];
+
+        /* Fill in top row of solution array
+         * Will always be the same as the top row of the input
+         */
+        for (int ii = 0 ; ii < n; ii++) {
+                cheapestPaths[0][ii] = canoeArray[0][ii];
+        }
+
+        //Goes from the top then down
+        for (int ii = 1; ii < n; ii++) {
+            //Goes from the left then the right
+            for (int qq = ii; qq < n; qq++) {
+                int minimum = -1;
+
+
+                //Goes through the values of the costs of all the paths left of the cell being looked at.
+                for (int xx = ii; xx < qq; xx++) {
+                    if (cheapestPaths[ii][xx] + canoeArray[ii][qq] < minimum || minimum == -1) {
+                        minimum = cheapestPaths[ii][xx] +canoeArray[ii][qq];
+                    }
+                }
+                //Goes through the values of the values on top of the current cell.
+                for (int xx = 0; xx < ii; xx++) {
+                    if (canoeArray[xx][qq] != -1) {
+                        if (cheapestPaths[xx][qq] < minimum || minimum == -1) {
+                            minimum = cheapestPaths[xx][qq];
+                        }
+                    }
+                }
+                cheapestPaths[ii][qq] = minimum;
+            }
+        }
+
+        System.out.println("Dynamic Programming Algorithm");
+
+        System.out.println("Minimum path: " + recover(cheapestPaths).toString() + ", Minimum cost: " + cheapestPaths[n - 1][n - 1]);
+    }
+
+    /**
+     * Recovers the path from the array.
+     *
+     * @param cheapestPaths if the array of the paths.
+     * @return the correct cheapest paths.
+     */
+    public static Set<Integer> recover(Integer[][] cheapestPaths) {
+        Set<Integer>  cheapest = new TreeSet<>();
+
+        cheapest.add(1); cheapest.add(n);
+        int xx = n - 1;
+        int yy = n - 1;
+        while (xx > 0) {
+
+            int current = cheapestPaths[xx][yy];
+            int above   = cheapestPaths[xx-1][yy];
+
+            if (current == above) {
+                xx--;
+            } else {
+                int min = Integer.MAX_VALUE;
+                int minIndex = Integer.MAX_VALUE;
+                int ii;
+                for (ii = xx; ii < yy; ii++) {
+
+                    if (cheapestPaths[xx][ii] < min) {
+                        min = cheapestPaths[xx][ii];
+                        minIndex = ii;
+                    }
+                }
+                cheapest.add(minIndex + 1);
+                yy = minIndex;
+            }
+        }
+        return cheapest;
+    }
+
+
+    /**
+     * Divide. O(n^2);
+     *
+     * @param i is the starting point, which is 0.
+     * @return an array.
+     */
+    public static int[] divide(int i) {
+        int minValue = Integer.MAX_VALUE;
+        int min = Integer.MAX_VALUE;
+        int[] arr = new int[n + 1];
+        //Base case. if the i is almost to the length, end it.
+        if(i == n - 1) {
+            arr[0] = 0;
+            return arr;
+        } else {
+            for(int qq = i + 1; qq < n; qq++) {
+                int[] tempArray = divide(qq);
+                int value = tempArray[0] + canoeArray[i][qq];
+                if (value < minValue) {
+                    minValue = value;
+                    min = qq;
+                    System.arraycopy(tempArray, 0, arr, 0, arr.length);
+                }
+            }
+        }
+        arr[0] = minValue;
+        arr[i + 1] = min + 1;
+        for (int ii = 0; ii < n; ii ++) {
+            System.out.print(arr[ii]);
+        }
+        return arr;
+    }
+
+
+    /**
+     *
+     * @param minPath array to transform.
+     * @return a string
+     */
+    private static String buildDividePath(int[] minPath) {
         StringBuilder sb = new StringBuilder();
         sb.append("[1");
-        for(int i = 1; i < minCost.length; i++) {
-            if(minCost[i] > 0) {
+        for(int i = 1; i < minPath.length; i++) {
+            if(minPath[i] > 0) {
                 sb.append(", ");
-                sb.append(minCost[i]);
+                sb.append(minPath[i]);
             }
         }
         sb.append("]");
 
         return sb.toString();
     }
-    public static Set<ArrayList<Integer>> getPossiblePaths(int numPosts) {
-        Set<ArrayList<Integer>> pathList = new HashSet<>();
-
-        for (int p = numPosts; p > 2; p--) {
-            for (int i = 2; i < numPosts; i++) {
-                ArrayList<Integer> arr = new ArrayList<>();
-                arr.add(1);
-                for (int j = i; j < p; j++) {
-                    arr.add(j);
-                }
-                arr.add(numPosts);
-                pathList.add(arr);
-            }
-        }
-
-        return pathList;
-    }
-    public static void dynamic(int[][] arr) {
-        int n = arr[0].length;
-        Integer[][] cheapArr = new Integer[n][n];
-
-        /* Fill in top row of solution array
-         * Will always be the same as the top row of the input
-         */
-        for (int i = 0 ; i < n; i++) {
-                cheapArr[0][i] = arr[0][i];
-        }
-
-        //Top to bottom
-        for (int i = 1; i < n; i++) {
-            //Left to right
-            for (int j = i; j < n; j++) {
-                int minValue = -1;
-
-                //Find the minimum value of all values to the left of the current cell [i][j]
-                //added onto the current cell. That is, the most optimal previous value plus the price
-                //of renting a canoe in this particular column.
-                for (int k = i; k < j; k++) {
-                    if (cheapArr[i][k]
-                            + arr[i][j] < minValue
-                            || minValue == -1) {
-                        minValue = cheapArr[i][k] + arr[i][j];
-                    }
-                }
-                //find the minimum value of all cells above in the same column of the current cell
-                //if any of these values are less than the current minimum obtained from looking to the left,
-                //update the minimum to the value above as it is more optimal.
-                for (int k = 0; k < i; k++) {
-                    if (arr[k][j] != -1) {
-
-                        if (cheapArr[k][j] < minValue || minValue == -1) {
-                            minValue = cheapArr[k][j];
-                        }
-                    }
-                }
-                //Finally, update the current cell to the most optimal value obtained from the above loops.
-                cheapArr[i][j] = minValue;
-            }
-        }
-
-        System.out.println("Dynamic Programming Algorithm");
-
-        System.out.println("Minimum path: " + recover(cheapArr).toString() + ", Minimum cost: " + cheapArr[n - 1][n - 1]);
-    }
-    public static int[] divide(int i) {
-        int minVal = Integer.MAX_VALUE;
-        int minJ = Integer.MAX_VALUE;
-        int[] arr = new int[n + 1];
-
-        if(i == n - 1) {        /* BASE CASE */
-            arr[0] = 0;
-            return arr;
-        } else {
-            for(int j = i + 1; j < n; j++) {
-                int[] curArr = divide(j);
-                int curVal = curArr[0] + canoeArray[i][j];
-
-                if (curVal < minVal) {
-                    minVal = curVal;
-                    minJ = j;
-
-                    System.arraycopy(curArr, 0, arr, 0, arr.length); //O(n)
-                }
-            }
-        }
-        arr[0] = minVal;                /* Updates the minimum value. */
-
-        /* Add the current solution j value to the argument. */
-        arr[i + 1] = minJ + 1;
-        //System.out.println("i: " + (i + 1) + ", j: " + (minJ + 1) + ", return value: " + retVal);
-        return arr;
-    }
     
-    public static Set<Integer> recover(Integer[][] cheapestArr) {
-        int n = cheapestArr[0].length;
-        Set<Integer>  cheap = new TreeSet<>(); /*O(log(n))*/
 
-        cheap.add(1); cheap.add(n);
-        int row = n - 1, col = n - 1;
-        while (row > 0) {
-
-            int current = cheapestArr[row][col];
-            int above   = cheapestArr[row-1][col];
-
-            if (current == above) {
-                row--;
-            } else {
-                int min = Integer.MAX_VALUE;
-                int minIndex = Integer.MAX_VALUE;
-                int i;
-                for (i = row; i < col; i++) {
-
-                    if (cheapestArr[row][i] < min) {
-                        min = cheapestArr[row][i];
-                        minIndex = i;
-                    }
-                }
-                cheap.add(minIndex + 1);
-                col = minIndex;
-            }
-        }
-        return cheap;
-    }
 }
