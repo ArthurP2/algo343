@@ -13,7 +13,16 @@ public class Main {
     private static int[][] canoeArray;
 
     public static void main(String[] args){
-        String f = "test.txt";
+        String f;
+        // Get the fileName from the terminal or else return and exit.
+        if(args.length > 0) {
+            f = args[0];
+            System.out.println("File succesfully read in, File size: " + n);
+        } else {
+            f= "test.txt";
+            System.out.println("No input file given.");
+            //  return;
+        }
         Scanner sc = null;
         Scanner sc2 = null;
         try {
@@ -266,9 +275,6 @@ public class Main {
         }
         arr[0] = minValue;
         arr[i + 1] = min + 1;
-        for (int ii = 0; ii < n; ii ++) {
-            System.out.print(arr[ii]);
-        }
         return arr;
     }
 
