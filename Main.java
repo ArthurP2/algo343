@@ -17,10 +17,10 @@ public class Main {
         // Get the fileName from the terminal or else return and exit.
         if(args.length > 0) {
             f = args[0];
-            System.out.println("File succesfully read in, File size: " + n);
+            System.out.println("File Read");
         } else {
             f= "test.txt";
-            System.out.println("No input file given.");
+            System.out.println("No File given. Using default 4 size text file");
             //  return;
         }
         Scanner sc = null;
@@ -58,36 +58,39 @@ public class Main {
             }
             qq++;
         }
-
+        /**
         //Printing the contents of the array from the file.
         for (int xx = 0; xx < n; xx++){
             for (int yy = 0; yy < n; yy++){
                 System.out.print(canoeArray[xx][yy] + "|");
             }
             System.out.println();
-        }
-        //Creates a randomArray generator object.
-        Random2DArray r = new Random2DArray(n);
-        //Get a random array.
-        canoeArray = r.giveMeArray();
+        }*/
+
+
+        n = canoeArray.length;
         long start, end;
-        start = System.currentTimeMillis();
-        brute();
-        end = System.currentTimeMillis();
-        System.out.println("Brute took " + (end - start) + " milliseconds\n");
 
-        start = System.currentTimeMillis();
+
+        start = System.nanoTime();
         dynamic();
-        end = System.currentTimeMillis();
-        System.out.println("Dynamic took " + (end - start) + " milliseconds\n");
+        end = System.nanoTime();
+        System.out.println("Dynamic: " + (end - start) + " nanoseconds\n");
 
-        start = System.currentTimeMillis();
+        start = System.nanoTime();
         int[] cheapestCost = divide(0);
-        end = System.currentTimeMillis();
         String minPathDivide = buildDividePath(cheapestCost);
-        System.out.println("Divide and Conquer Algorithm");
-        System.out.println("Minimum Path:" + minPathDivide + "Minimum cost: " + cheapestCost[0]);
-        System.out.println("Dynamic took " + (end - start) + " milliseconds\n");
+        end = System.nanoTime();
+
+        System.out.println("Divide and Conquer Algorithm [O(n^2)]");
+        System.out.println("Cheapest Path:" + minPathDivide);
+        System.out.println("Cheapest cost: " + cheapestCost[0]);
+        System.out.println("Divide: " + (end - start) + " nanoseconds\n");
+
+        start = System.nanoTime();
+        brute();
+        end = System.nanoTime();
+        System.out.println("Brute: " + (end - start) + " nanoseconds\n");
 
         sc.close();
         sc2.close();
@@ -103,7 +106,6 @@ public class Main {
         TreeSet<Integer> allLocations = new TreeSet<>();
         for(int ii = 1; ii <= n; ii++) {
             allLocations.add(ii);
-
         }
         //Get all paths possible form canoe array
         Set<TreeSet<Integer>> allPaths = getAllPathsInSet(allLocations);
@@ -129,9 +131,9 @@ public class Main {
                 }
             }
         }
-
         // Display the minimum set
-        System.out.println("Cheapest Path: " + minPath.toString() + ", Cheapest Cost: " + minimum);
+        System.out.println("Cheapest Path: " + minPath.toString());
+        System.out.println("Cheapest Cost: " + minimum);
     }
 
     /**
@@ -144,19 +146,15 @@ public class Main {
         Set<TreeSet<Integer>> allPaths = new HashSet<>();
         //This set will hold tree sets, since it is the holder of all possible sets in the path.
         allPaths.add(new TreeSet<>());
-
         for (Integer xx : thePaths) {
             Set<TreeSet<Integer>> newCombos = new HashSet<>();
-
             for (TreeSet<Integer> combo : allPaths) {
                 if (combo.contains(1) || combo.contains(n-1)) {
                     newCombos.add(combo);
                 }
-
                 TreeSet<Integer> newSubset = new TreeSet<>(combo);
                 newSubset.add(xx);
                 newCombos.add(newSubset);
-
             }
             allPaths = newCombos;
         }
@@ -166,27 +164,20 @@ public class Main {
 
 
     /**
-     * dynamic. O(nLogn)
+     * dynamic. O(n^2)
      *
      */
     public static void dynamic() {
-
         Integer[][] cheapestPaths = new Integer[n][n];
 
-        /* Fill in top row of solution array
-         * Will always be the same as the top row of the input
-         */
         for (int ii = 0 ; ii < n; ii++) {
                 cheapestPaths[0][ii] = canoeArray[0][ii];
         }
-
         //Goes from the top then down
         for (int ii = 1; ii < n; ii++) {
             //Goes from the left then the right
             for (int qq = ii; qq < n; qq++) {
                 int minimum = -1;
-
-
                 //Goes through the values of the costs of all the paths left of the cell being looked at.
                 for (int xx = ii; xx < qq; xx++) {
                     if (cheapestPaths[ii][xx] + canoeArray[ii][qq] < minimum || minimum == -1) {
@@ -204,10 +195,9 @@ public class Main {
                 cheapestPaths[ii][qq] = minimum;
             }
         }
-
-        System.out.println("Dynamic Programming Algorithm");
-
-        System.out.println("Minimum path: " + recover(cheapestPaths).toString() + ", Minimum cost: " + cheapestPaths[n - 1][n - 1]);
+        System.out.println("Dynamic Programming Algorithm [O(n^2)]");
+        System.out.println("Cheapest path: " + getPath(cheapestPaths).toString());
+        System.out.println("Cheapest cost: " + cheapestPaths[n - 1][n - 1]);
     }
 
     /**
@@ -216,17 +206,14 @@ public class Main {
      * @param cheapestPaths if the array of the paths.
      * @return the correct cheapest paths.
      */
-    public static Set<Integer> recover(Integer[][] cheapestPaths) {
+    public static Set<Integer> getPath(Integer[][] cheapestPaths) {
         Set<Integer>  cheapest = new TreeSet<>();
-
         cheapest.add(1); cheapest.add(n);
         int xx = n - 1;
         int yy = n - 1;
         while (xx > 0) {
-
             int current = cheapestPaths[xx][yy];
             int above   = cheapestPaths[xx-1][yy];
-
             if (current == above) {
                 xx--;
             } else {
@@ -234,7 +221,6 @@ public class Main {
                 int minIndex = Integer.MAX_VALUE;
                 int ii;
                 for (ii = xx; ii < yy; ii++) {
-
                     if (cheapestPaths[xx][ii] < min) {
                         min = cheapestPaths[xx][ii];
                         minIndex = ii;
